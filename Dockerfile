@@ -10,37 +10,43 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    libzip-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Instala o Node.js (para compilar o front-end com Vite, Tailwind, etc.)
+# Instala extensão Redis via PECL
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Instala Node.js (18.x) e npm
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs
 
-# Instala o Composer
+# Instala Composer (usando imagem oficial)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Criar o grupo e o usuário com UID e GID 1001
+# Criar grupo/usuário com UID e GID 1001
 RUN groupadd -g 1001 gruposeres \
     && useradd -m -u 1001 -g 1001 -s /bin/bash gruposeres \
     && usermod -aG www-data gruposeres \
     && echo "gruposeres ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-
-# Definir diretório de trabalho
+# Diretório de trabalho
 WORKDIR /var/www/html
 
-# Instalar as dependências do Node
+# Atualiza o NPM para versão mais recente
 RUN npm install -g npm
 
-# Ajustar permissões para que o usuário tenha acesso à pasta
+# Ajusta permissões do diretório do projeto
 RUN sudo chown -R gruposeres:www-data /var/www/html \
     && chmod -R 775 /var/www/html
 
-# Definir o usuário padrão para evitar que os arquivos sejam criados como root
+# Define usuário padrão
 USER gruposeres
 
-# Expor a porta 9000 para o PHP-FPM
+# Expõe a porta padrão do PHP-FPM
 EXPOSE 9000
 
-# Definir o comando padrão
+# Comando padrão
 CMD ["php-fpm"]

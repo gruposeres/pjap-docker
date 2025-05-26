@@ -39,6 +39,30 @@ services:
     networks:
       - laravel
 
+  redis:
+    image: redis:alpine
+    container_name: redis-server
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel
+
+  horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-horizon
+    restart: unless-stopped
+    command: php artisan horizon
+    depends_on:
+      - redis
+      - app
+    volumes:
+      - ./www:/var/www/html
+    networks:
+      - laravel
+
 networks:
   laravel:
     driver: bridge
