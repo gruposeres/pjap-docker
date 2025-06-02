@@ -1,0 +1,3 @@
+CREATE USER IF NOT EXISTS 'gseresuser'@'%' IDENTIFIED BY 'Gseres@12345';
+GRANT ALL PRIVILEGES ON pjap_candidates.* TO 'gseresuser'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
