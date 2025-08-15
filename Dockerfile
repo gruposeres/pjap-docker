@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Instala extensões do PHP e ferramentas básicas
+# Instala extensões PHP e pacotes necessários
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -16,37 +16,31 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Instala extensão Redis via PECL
+# Instala extensão Redis
 RUN pecl install redis && docker-php-ext-enable redis
 
-# Instala Node.js (18.x) e npm
+# Instala Node.js e npm (v18.x)
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs
 
-# Instala Composer (usando imagem oficial)
+# Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Criar grupo/usuário com UID e GID 1001
-RUN groupadd -g 1001 gruposeres \
-    && useradd -m -u 1001 -g 1001 -s /bin/bash gruposeres \
-    && usermod -aG www-data gruposeres \
-    && echo "gruposeres ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Cria usuário sem UID fixo (evita conflito entre ambientes)
+RUN useradd -ms /bin/bash administrador && \
+    usermod -aG www-data administrador && \
+    echo "administrador ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 # Diretório de trabalho
 WORKDIR /var/www/html
 
-# Atualiza o NPM para versão mais recente
+# Atualiza NPM para a versão mais recente
 RUN npm install -g npm
 
-# Ajusta permissões do diretório do projeto
-RUN sudo chown -R gruposeres:www-data /var/www/html \
-    && chmod -R 775 /var/www/html
-
-# Define usuário padrão
-USER gruposeres
+# Define o usuário padrão
+USER administrador
 
 # Expõe a porta padrão do PHP-FPM
 EXPOSE 9000
 
-# Comando padrão
 CMD ["php-fpm"]

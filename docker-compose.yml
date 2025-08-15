@@ -5,8 +5,12 @@ services:
       dockerfile: Dockerfile
     container_name: laravel-app
     restart: unless-stopped
+    environment:
+      TZ: America/Sao_Paulo
     volumes:
       - ./www:/var/www/html
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     # command: sh -c "sudo chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && php-fpm"
     networks:
       - laravel
@@ -16,10 +20,12 @@ services:
     container_name: nginx-server
     restart: unless-stopped
     ports:
-      - "82:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./www:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certificado:/etc/nginx/certificado  # monta os certificados
     networks:
       - laravel
 
@@ -32,11 +38,14 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_USER: gseresuser
       MYSQL_PASSWORD: Gseres@12345
+      TZ: America/Sao_Paulo
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - ./mysql-data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - laravel
 
@@ -55,12 +64,16 @@ services:
       dockerfile: Dockerfile
     container_name: laravel-horizon
     restart: unless-stopped
+    environment:
+      TZ: America/Sao_Paulo
     command: php artisan horizon
     depends_on:
       - redis
       - app
     volumes:
       - ./www:/var/www/html
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - laravel
 
